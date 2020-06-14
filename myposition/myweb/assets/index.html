@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Brownian motion zjyFrank</title>
+    <script src="https://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+    <script src="https://echarts.baidu.com/gallery/vendors/echarts-gl/echarts-gl.min.js"></script>
+    <script src="https://echarts.baidu.com/gallery/vendors/simplex.js"></script>
+</head>
+
+<body>
+    <form action="/" onsubmit="connect(); return false;">
+        <input type="submit" value="connect">
+    </form>
+    <div id="position"></div>
+    <div id="main" style="width: 600px;height:400px;"></div>
+    <script type="text/javascript">
+        
+        var ws = null;              //websocket
+        var position = 0;           //position(format:string) from Server
+        var X, Y, Z;
+        var posData = [];           //position value for echarts
+        // init my echarts instance
+        var myChart = echarts.init(document.getElementById('main'));
+
+        function showPosition(posData) {
+            // options
+            var option = {
+                backgroundColor: '#404a59',
+                title: {
+                    text: '花粉布朗运动',
+                    textStyle: {
+                        color: '#fff'
+                    },
+                    subtext: 'data from position',
+                    left: 'center'
+                },
+
+                xAxis3D: {
+                    type: 'value',
+                    min: 0,
+                    max: 20000
+                },
+                yAxis3D: {
+                    type: 'value',
+                    min: 0,
+                    max: 20000
+                },
+                zAxis3D: {
+                    type: 'value',
+                    min: 0,
+                    max: 20000
+                },
+                grid3D: {
+                    axisLine: {
+                        lineStyle: { color: '#fff' }
+                    },
+                    axisPointer: {
+                        lineStyle: { color: '#fff' }
+                    },
+                    viewControl: {
+                        //autoRotate: true
+                    }
+                },
+                series: [{
+                    type: 'scatter3D',
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    itemStyle: {
+                        color: '#00FFFF',
+                        opacity: 0.8,
+                    },
+                    data: posData
+                }]
+            }
+            myChart.setOption(option);
+        }
+        // get X/Y/Z(int) from position(string)
+        function getXYZ(event) {
+            position = event.data;
+            X = parseInt(position.substr(11, 5));   //split from whole string
+            Y = parseInt(position.substr(17, 5));
+            Z = parseInt(position.substr(23, 5));
+
+            posData = [];
+            posData.push([X, Y, Z]);
+        }
+
+        function onmessage(event) {
+            getXYZ(event);
+            document.getElementById("position").innerHTML = event.data + "<br>"
+                + "X = " + X + "<br>"
+                + "Y = " + Y + "<br>"
+                + "Z = " + Z + "<br>";
+            showPosition(posData);  //echarts update whenever position update
+        }
+
+        function connect() {
+            ws = new WebSocket("wss://192.168.1.6:8888/connect");
+            //open
+            ws.onopen = function (event) {
+                alert("Hello ZJY");
+                ws.send("Hello Server");
+            }
+            //message
+            ws.onmessage = function (event) { onmessage(event) };
+            //close
+            ws.onclose = function (event) { alert("Goodbye ZJY"); }
+        }
+    </script>
+</body>
+
+</html>

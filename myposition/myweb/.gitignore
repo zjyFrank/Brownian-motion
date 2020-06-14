@@ -1,0 +1,6 @@
+*.o
+.flavor
+.objs
+myweb.so
+assets.h
+cert
